@@ -6,7 +6,8 @@ const TODAY: IsoDate = '2026-11-10';
 
 const roster = (members: string[], ...rows: [IsoDate, ...(Mark | null)[]][]): Roster => ({
   members,
-  rows: rows.map(([date, ...marks]) => ({ date, marks })),
+  dateColumn: 0,
+  rows: rows.map(([date, ...marks], line) => ({ date, line, marks })),
 });
 
 const plan = (input: Roster): (string | null)[] =>

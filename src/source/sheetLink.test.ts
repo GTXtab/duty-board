@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isOfficeFileLink, toCsvExportUrl } from './sheetLink';
+import { isOfficeFileLink, parseSheetLink, toCsvExportUrl } from './sheetLink';
 
 const ID = 'abcdefghijklmnopqrstuvwxyz';
 
@@ -18,6 +18,15 @@ describe('toCsvExportUrl', () => {
     'https://docs.google.com/spreadsheets/d/e/2PACX-published/pubhtml',
   ])('rejects %s', (link) => {
     expect(toCsvExportUrl(link)).toBeNull();
+  });
+});
+
+describe('parseSheetLink', () => {
+  it('prefers the gid from the fragment', () => {
+    expect(parseSheetLink(`https://docs.google.com/spreadsheets/d/${ID}/edit?gid=1#gid=2`)).toEqual({
+      id: ID,
+      gid: '2',
+    });
   });
 });
 

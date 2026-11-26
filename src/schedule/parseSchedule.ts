@@ -21,7 +21,7 @@ const UNCHECKED = 'false';
 
 const isDateHeader = (cell: string): boolean => cell.toLowerCase() === DATE_HEADER;
 
-const columnName = (index: number): string => {
+export const columnName = (index: number): string => {
   const letter = String.fromCharCode(65 + (index % 26));
   return index < 26 ? letter : columnName(Math.floor(index / 26) - 1) + letter;
 };
@@ -92,14 +92,14 @@ const readRoster = (
       }
       return mark ?? null;
     });
-    rows.push({ date, marks });
+    rows.push({ date, line: rowIndex, marks });
   });
 
   if (rows.length === 0) {
     errors.push(`Під «Дата» (${address(dateColumn, headerIndex)}) немає жодної дати.`);
   }
 
-  return { members, rows: rows.sort((a, b) => a.date.localeCompare(b.date)) };
+  return { members, dateColumn, rows: rows.sort((a, b) => a.date.localeCompare(b.date)) };
 };
 
 /** Cleaning tables are recognised by their dates never being on consecutive days. */
@@ -118,11 +118,7 @@ const fail = (errors: readonly string[]): ParseResult => ({
       : errors,
 });
 
-export const parseSchedule = (text: string, delimiter: Delimiter = '\t'): ParseResult => {
-  if (text.trim() === '') return fail(['Встав скопійовану таблицю.']);
-  if (text.length > MAX_INPUT_LENGTH) return fail(['Забагато даних. Скопіюй лише аркуш графіка.']);
-
-  const table = parseDelimited(text, delimiter);
+export const parseTable = (table: readonly (readonly string[])[]): ParseResult => {
   const headerIndex = table.findIndex((row) => row.some(isDateHeader));
   if (headerIndex === -1) {
     return fail(['Не знайдено колонку «Дата». Копіюй клітинки разом із шапкою.']);
@@ -145,4 +141,10 @@ export const parseSchedule = (text: string, delimiter: Delimiter = '\t'): ParseR
   }
 
   return { ok: true, schedule: { daily: dailyRoster, cleaning: cleaning[0] ?? null } };
+};
+
+export const parseSchedule = (text: string, delimiter: Delimiter = '\t'): ParseResult => {
+  if (text.trim() === '') return fail(['Встав скопійовану таблицю.']);
+  if (text.length > MAX_INPUT_LENGTH) return fail(['Забагато даних. Скопіюй лише аркуш графіка.']);
+  return parseTable(parseDelimited(text, delimiter));
 };

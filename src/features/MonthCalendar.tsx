@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { formatMonth, formatShort, monthKey, weekdayIndex } from '../schedule/date';
 import { membersWith } from '../schedule/selectors';
 import type { IsoDate, Roster } from '../schedule/types';
+import { MarkList, type Marking } from './MarkList';
 import { PersonChip } from './PersonChip';
 
 const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
@@ -9,9 +10,10 @@ const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 interface MonthCalendarProps {
   readonly roster: Roster;
   readonly today: IsoDate;
+  readonly marking: Marking | null;
 }
 
-export const MonthCalendar = ({ roster, today }: MonthCalendarProps) => {
+export const MonthCalendar = ({ roster, today, marking }: MonthCalendarProps) => {
   const months = [...new Set(roster.rows.map((row) => monthKey(row.date)))];
   const [position, setPosition] = useState(() => Math.max(months.indexOf(monthKey(today)), 0));
   const rows = roster.rows.filter((row) => monthKey(row.date) === months[position]);
@@ -72,6 +74,7 @@ export const MonthCalendar = ({ roster, today }: MonthCalendarProps) => {
                   <PersonChip key={name} name={name} index={index} mark={row.marks[index]} />
                 ))}
               </div>
+              {marking && row.date <= today && <MarkList roster={roster} row={row} {...marking} />}
               {away.length > 0 && (
                 <details className="away">
                   <summary>Поїхали: {away.length}</summary>

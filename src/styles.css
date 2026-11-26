@@ -21,6 +21,10 @@ ol, ul { margin: 0; padding: 0; }
 .hint { color: var(--muted); margin: 0; font-size: 0.9rem; }
 label { font-weight: 600; }
 input { width: 100%; font: inherit; padding: 0.6rem 0.75rem; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--bg); color: var(--text); }
+select { font: inherit; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+.marks { font-size: 0.8rem; }
+.marks label { display: flex; gap: 0.3rem; align-items: center; font-weight: 400; overflow-wrap: anywhere; }
+.marks input { width: auto; margin: 0; }
 textarea { width: 100%; font: 0.85rem ui-monospace, monospace; padding: 0.75rem; border: 1px solid var(--line); border-radius: 0.5rem; background: var(--bg); color: var(--text); }
 button { font: inherit; padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
 button.secondary { background: transparent; color: var(--accent); }

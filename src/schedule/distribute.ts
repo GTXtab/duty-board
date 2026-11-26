@@ -50,8 +50,8 @@ export const distribute = (roster: Roster, today: IsoDate): Roster => {
 
     for (const person of onDuty) person.lastDuty = row.date;
     previous = new Set(onDuty.map(({ index }) => index));
-    return { date: row.date, marks };
+    return { ...row, marks };
   });
 
-  return { members: roster.members, rows };
+  return { ...roster, rows };
 };

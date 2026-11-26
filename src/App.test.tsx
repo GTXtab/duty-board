@@ -28,24 +28,24 @@ const csv = (body: string): Response =>
 
 describe('App', () => {
   it('shows validation errors', () => {
-    render(<App />);
+    render(<App googleClientId={null} />);
     paste('Дата\tОля\n26.11.2026\t?');
     expect(screen.getByRole('alert').textContent).toContain('B2');
   });
 
   it('renders a pasted schedule and restores it after reload', () => {
-    const view = render(<App />);
+    const view = render(<App googleClientId={null} />);
     paste('Дата\tОля\n26.11.2026\tЧ');
     expect(screen.getByText('Баланс щоденних чергувань')).toBeTruthy();
     view.unmount();
-    render(<App />);
+    render(<App googleClientId={null} />);
     expect(screen.getByText('Баланс щоденних чергувань')).toBeTruthy();
   });
 
   it('connects by link, then refreshes it on the next visit', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockImplementation(async () => csv('Дата,Оля\n26.11.2026,TRUE'));
     vi.stubGlobal('fetch', fetchMock);
-    const view = render(<App />);
+    const view = render(<App googleClientId={null} />);
     connect();
     await screen.findByText(/Дані станом на/);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
@@ -53,7 +53,7 @@ describe('App', () => {
     );
     view.unmount();
     fetchMock.mockClear();
-    render(<App />);
+    render(<App googleClientId={null} />);
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
   });
 
@@ -63,14 +63,14 @@ describe('App', () => {
       JSON.stringify({ kind: 'link', link: LINK, text: 'Дата,Оля\n26.11.2026,TRUE', fetchedAt: 0 }),
     );
     vi.stubGlobal('fetch', vi.fn<typeof fetch>().mockRejectedValue(new TypeError('offline')));
-    render(<App />);
+    render(<App googleClientId={null} />);
     expect((await screen.findByRole('alert')).textContent).toContain('Не вдалося');
     expect(screen.getByText('Баланс щоденних чергувань')).toBeTruthy();
   });
 
   it('reads a schedule saved by the previous version', () => {
     window.localStorage.setItem('duty-board:sheet', 'Дата\tОля\n26.11.2026\tЧ');
-    render(<App />);
+    render(<App googleClientId={null} />);
     expect(screen.getByText('Баланс щоденних чергувань')).toBeTruthy();
   });
 });

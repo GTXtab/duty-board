@@ -1,14 +1,16 @@
 import { formatDay } from '../schedule/date';
 import { membersWith } from '../schedule/selectors';
 import type { IsoDate, Roster } from '../schedule/types';
+import { MarkList, type Marking } from './MarkList';
 import { PersonChip } from './PersonChip';
 
 interface CleaningListProps {
   readonly roster: Roster;
   readonly today: IsoDate;
+  readonly marking: Marking | null;
 }
 
-export const CleaningList = ({ roster, today }: CleaningListProps) => (
+export const CleaningList = ({ roster, today, marking }: CleaningListProps) => (
   <section className="card">
     <h2>Генеральне прибирання</h2>
     <ol className="cleaning">
@@ -23,6 +25,7 @@ export const CleaningList = ({ roster, today }: CleaningListProps) => (
               ))}
               {groups.length === 0 && <span className="hint">Не призначено</span>}
             </div>
+            {marking && row.date <= today && <MarkList roster={roster} row={row} {...marking} />}
           </li>
         );
       })}
