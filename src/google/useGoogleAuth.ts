@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createSession, readSession, writeSession, type Session } from './session';
 
 const SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 const SCOPES = [
@@ -6,18 +7,24 @@ const SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',
 ];
 
-/** The token lives only in memory, so it disappears with the tab. */
 export const useGoogleAuth = (clientId: string | null) => {
-  const [token, setToken] = useState<string | null>(null);
+  const [session, setSession] = useState<Session | null>(() =>
+    clientId === null ? null : readSession(Date.now()),
+  );
   const [isReady, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const client = useRef<GoogleTokenClient | null>(null);
-  const expiry = useRef<number | undefined>(undefined);
 
   const forget = useCallback((): void => {
-    window.clearTimeout(expiry.current);
-    setToken(null);
+    writeSession(null);
+    setSession(null);
   }, []);
+
+  useEffect(() => {
+    if (!session) return undefined;
+    const timer = window.setTimeout(forget, session.expiresAt - Date.now());
+    return () => window.clearTimeout(timer);
+  }, [session, forget]);
 
   useEffect(() => {
     if (clientId === null) return undefined;
@@ -35,9 +42,13 @@ export const useGoogleAuth = (clientId: string | null) => {
             return;
           }
           setError(null);
-          setToken(response.access_token);
-          window.clearTimeout(expiry.current);
-          expiry.current = window.setTimeout(forget, Number(response.expires_in ?? 3600) * 1000);
+          const next = createSession(
+            response.access_token,
+            Number(response.expires_in ?? 3600),
+            Date.now(),
+          );
+          writeSession(next);
+          setSession(next);
         },
         error_callback: () => setError('Вікно входу закрито або заблоковано браузером.'),
       });
@@ -51,11 +62,10 @@ export const useGoogleAuth = (clientId: string | null) => {
     script.addEventListener('load', init);
     script.addEventListener('error', () => setError('Не вдалося завантажити вхід Google.'));
     document.head.append(script);
-    return () => {
-      script.remove();
-      window.clearTimeout(expiry.current);
-    };
-  }, [clientId, forget]);
+    return () => script.remove();
+  }, [clientId]);
+
+  const token = session?.token ?? null;
 
   const signIn = (): void => client.current?.requestAccessToken();
 
