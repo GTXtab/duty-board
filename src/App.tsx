@@ -58,9 +58,26 @@ export const App = ({ googleClientId }: { readonly googleClientId: string | null
       <header className="top">
         <h1>Графік чергування</h1>
         {loaded && (
-          <button type="button" className="secondary" onClick={clear}>
-            Інша таблиця
-          </button>
+          <div className="actions">
+            {source?.kind === 'link' && (
+              <>
+                <p className="hint" role="status">
+                  Дані станом на {formatTime.format(source.fetchedAt)}
+                </p>
+                <button
+                  type="button"
+                  className="secondary"
+                  disabled={isLoading}
+                  onClick={() => void loadLink(source.link)}
+                >
+                  {isLoading ? 'Оновлюю…' : 'Оновити'}
+                </button>
+              </>
+            )}
+            <button type="button" className="secondary" onClick={clear}>
+              Інша таблиця
+            </button>
+          </div>
         )}
       </header>
 
@@ -73,21 +90,7 @@ export const App = ({ googleClientId }: { readonly googleClientId: string | null
               Ця таблиця не збережена й зникне після перезавантаження сторінки.
             </p>
           )}
-          {source?.kind === 'link' && (
-            <div className="actions">
-              <p className="hint" role="status">
-                Дані станом на {formatTime.format(source.fetchedAt)}
-              </p>
-              <button
-                type="button"
-                className="secondary"
-                disabled={isLoading}
-                onClick={() => void loadLink(source.link)}
-              >
-                {isLoading ? 'Оновлюю…' : 'Оновити'}
-              </button>
-            </div>
-          )}
+          <TodaySummary daily={daily} cleaning={cleaning ?? null} today={today} />
           {auth.isEnabled && (
             <GooglePanel
               members={daily.members}
@@ -101,7 +104,6 @@ export const App = ({ googleClientId }: { readonly googleClientId: string | null
               onSync={sync}
             />
           )}
-          <TodaySummary daily={daily} cleaning={cleaning ?? null} today={today} />
           <div className={cleaning ? 'boards split' : 'boards'}>
             <MonthCalendar roster={daily} today={today} marking={markingFor('daily')} />
             {cleaning && (

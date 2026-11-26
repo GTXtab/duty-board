@@ -11,18 +11,21 @@ interface MarkListProps extends Marking {
 }
 
 export const MarkList = ({ roster, row, isBusy, onToggle }: MarkListProps) => (
-  <details className="marks">
+  // A shared name lets the browser keep only one list open.
+  <details className="marks" name="marks">
     <summary>Відмітити</summary>
-    {roster.members.map((name, index) => (
-      <label key={name}>
-        <input
-          type="checkbox"
-          checked={row.marks[index] === 'done'}
-          disabled={isBusy || row.marks[index] === 'away'}
-          onChange={(event) => onToggle(row, name, event.target.checked)}
-        />
-        {name}
-      </label>
-    ))}
+    <div className="options">
+      {roster.members.map((name, index) => (
+        <label key={name}>
+          <input
+            type="checkbox"
+            checked={row.marks[index] === 'done'}
+            disabled={isBusy || row.marks[index] === 'away'}
+            onChange={(event) => onToggle(row, name, event.target.checked)}
+          />
+          {name}
+        </label>
+      ))}
+    </div>
   </details>
 );

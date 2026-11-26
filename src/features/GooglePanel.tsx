@@ -35,8 +35,7 @@ export const GooglePanel = (props: GooglePanelProps) => {
   const member = props.members.includes(stored) ? stored : '';
 
   return (
-    <section className="card">
-      <h2>Google</h2>
+    <section className="card google" aria-label="Google">
       {props.isSignedIn ? (
         <div className="actions">
           <select

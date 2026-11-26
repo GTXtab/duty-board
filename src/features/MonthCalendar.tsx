@@ -16,6 +16,7 @@ interface MonthCalendarProps {
 export const MonthCalendar = ({ roster, today, marking }: MonthCalendarProps) => {
   const months = [...new Set(roster.rows.map((row) => monthKey(row.date)))];
   const [position, setPosition] = useState(() => Math.max(months.indexOf(monthKey(today)), 0));
+  const [showPast, setShowPast] = useState(false);
   const rows = roster.rows.filter((row) => monthKey(row.date) === months[position]);
   const [first] = rows;
   if (!first) return null;
@@ -44,18 +45,29 @@ export const MonthCalendar = ({ roster, today, marking }: MonthCalendarProps) =>
         </button>
       </header>
 
+      {rows.some((row) => row.date < today) && (
+        <button type="button" className="secondary past-toggle" onClick={() => setShowPast(!showPast)}>
+          {showPast ? 'Сховати минулі дні' : 'Показати минулі дні'}
+        </button>
+      )}
+
       <div className="weekdays" aria-hidden="true">
         {WEEKDAYS.map((day) => (
           <span key={day}>{day}</span>
         ))}
       </div>
 
-      <ol className="calendar">
+      <ol className={showPast ? 'calendar show-past' : 'calendar'}>
         {rows.map((row) => {
           const duty = membersWith(roster, row, 'assigned', 'done', 'suggested');
           const away = membersWith(roster, row, 'away');
           const weekday = weekdayIndex(row.date);
-          const classes = ['day', weekday > 4 && 'weekend', row.date === today && 'today']
+          const classes = [
+            'day',
+            weekday > 4 && 'weekend',
+            row.date === today && 'today',
+            row.date < today && 'past',
+          ]
             .filter(Boolean)
             .join(' ');
           return (

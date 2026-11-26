@@ -1,27 +1,35 @@
 import { addDays, formatDay } from '../schedule/date';
 import { membersWith } from '../schedule/selectors';
 import type { IsoDate, Roster, RosterRow } from '../schedule/types';
-import { PersonChip } from './PersonChip';
+import { personStyle } from './personStyle';
 
 interface DutyCardProps {
   readonly title: string;
   readonly roster: Roster;
   readonly row: RosterRow | undefined;
   readonly emptyText: string;
+  readonly isHero?: boolean;
 }
 
-const DutyCard = ({ title, roster, row, emptyText }: DutyCardProps) => {
+const DutyCard = ({ title, roster, row, emptyText, isHero = false }: DutyCardProps) => {
   const people = row ? membersWith(roster, row, 'assigned', 'done', 'suggested') : [];
+  const [lead] = people;
+  const isDone = people.length > 0 && people.every(({ index }) => row?.marks[index] === 'done');
   return (
-    <article className="card">
-      <h2>{title}</h2>
-      {row && <p className="hint">{formatDay(row.date)}</p>}
-      <div className="chips large">
-        {people.map(({ name, index }) => (
-          <PersonChip key={name} name={name} index={index} mark={row?.marks[index]} />
-        ))}
-        {people.length === 0 && <span className="hint">{emptyText}</span>}
-      </div>
+    <article
+      className={isHero ? 'card hero' : 'card next'}
+      style={isHero && lead ? personStyle(lead.index) : undefined}
+    >
+      <header>
+        <h2>{title}</h2>
+        {row && <p className="hint">{formatDay(row.date)}</p>}
+      </header>
+      <p className="who">
+        {people.length > 0 ? people.map(({ name }) => name).join(', ') : emptyText}
+      </p>
+      {isHero && people.length > 0 && (
+        <p className={isDone ? 'state done' : 'state'}>{isDone ? '✓ Виконано' : 'Ще не відмічено'}</p>
+      )}
     </article>
   );
 };
@@ -34,17 +42,21 @@ interface TodaySummaryProps {
 
 export const TodaySummary = ({ daily, cleaning, today }: TodaySummaryProps) => {
   const rowOn = (date: IsoDate) => daily.rows.find((row) => row.date === date);
+  const todayRow = rowOn(today);
+  const tomorrowRow = rowOn(addDays(today, 1));
   const nextCleaning = cleaning?.rows.find((row) => row.date >= today);
   const describe = (row: RosterRow | undefined) => (row ? 'Не призначено' : 'Дати немає в таблиці');
 
   return (
     <section className="summary">
-      {[
-        { title: 'Сьогодні', row: rowOn(today) },
-        { title: 'Завтра', row: rowOn(addDays(today, 1)) },
-      ].map(({ title, row }) => (
-        <DutyCard key={title} title={title} roster={daily} row={row} emptyText={describe(row)} />
-      ))}
+      <DutyCard
+        isHero
+        title="Сьогодні чергує"
+        roster={daily}
+        row={todayRow}
+        emptyText={describe(todayRow)}
+      />
+      <DutyCard title="Завтра" roster={daily} row={tomorrowRow} emptyText={describe(tomorrowRow)} />
       {cleaning && (
         <DutyCard
           title="Найближче прибирання"

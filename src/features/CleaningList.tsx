@@ -10,14 +10,22 @@ interface CleaningListProps {
   readonly marking: Marking | null;
 }
 
-export const CleaningList = ({ roster, today, marking }: CleaningListProps) => (
+// Keeps the upcoming week visible when past weeks fill the scrollable list.
+const revealInList = (item: HTMLLIElement | null): void => {
+  const list = item?.parentElement;
+  if (item && list) list.scrollTop = item.offsetTop - list.offsetTop;
+};
+
+export const CleaningList = ({ roster, today, marking }: CleaningListProps) => {
+  const next = roster.rows.find((row) => row.date >= today)?.date;
+  return (
   <section className="card">
     <h2>Генеральне прибирання</h2>
     <ol className="cleaning">
       {roster.rows.map((row) => {
         const groups = membersWith(roster, row, 'assigned', 'done', 'suggested');
         return (
-          <li key={row.date} className={row.date < today ? 'past' : undefined}>
+          <li key={row.date} ref={row.date === next ? revealInList : undefined} className={row.date < today ? 'past' : row.date === next ? 'next-up' : undefined}>
             <time dateTime={row.date}>{formatDay(row.date)}</time>
             <div className="chips">
               {groups.map(({ name, index }) => (
@@ -31,4 +39,5 @@ export const CleaningList = ({ roster, today, marking }: CleaningListProps) => (
       })}
     </ol>
   </section>
-);
+  );
+};
