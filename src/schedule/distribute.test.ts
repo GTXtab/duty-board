@@ -22,6 +22,16 @@ const free = (day: 10 | 11 | 12 | 13 | 14 | 15, count: number): [IsoDate, ...nul
 ];
 
 describe('distribute', () => {
+  it('assigns nobody on covered days and carries the queue over', () => {
+    const input = roster(['A', 'B'], free(10, 2), free(11, 2), free(12, 2));
+    const rows = distribute(input, TODAY, new Set<IsoDate>(['2026-11-11'])).rows;
+    expect(rows.map((row) => row.marks)).toEqual([
+      ['suggested', null],
+      [null, null],
+      [null, 'suggested'],
+    ]);
+  });
+
   it('rotates evenly when nobody has served yet', () => {
     const input = roster(['A', 'B', 'C'], ...([10, 11, 12, 13, 14, 15] as const).map((d) => free(d, 3)));
     expect(plan(input)).toEqual(['A', 'B', 'C', 'A', 'B', 'C']);

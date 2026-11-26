@@ -93,7 +93,12 @@ export const TodaySummary = ({ daily, cleaning, today, marking }: TodaySummaryPr
   const todayRow = rowOn(today);
   const tomorrowRow = rowOn(addDays(today, 1));
   const nextCleaning = cleaning?.rows.find((row) => row.date >= today);
-  const describe = (row: RosterRow | undefined) => (row ? 'Не призначено' : 'Дати немає в таблиці');
+  const isCleaningDay = (date: IsoDate) =>
+    cleaning?.rows.some((row) => row.date === date) ?? false;
+  const describe = (date: IsoDate, row: RosterRow | undefined) => {
+    if (isCleaningDay(date)) return 'Генеральне прибирання';
+    return row ? 'Не призначено' : 'Дати немає в таблиці';
+  };
 
   return (
     <section className="summary">
@@ -103,9 +108,9 @@ export const TodaySummary = ({ daily, cleaning, today, marking }: TodaySummaryPr
         title="Сьогодні чергує"
         roster={daily}
         row={todayRow}
-        emptyText={describe(todayRow)}
+        emptyText={describe(today, todayRow)}
       />
-      <DutyCard title="Завтра" roster={daily} row={tomorrowRow} emptyText={describe(tomorrowRow)} />
+      <DutyCard title="Завтра" roster={daily} row={tomorrowRow} emptyText={describe(addDays(today, 1), tomorrowRow)} />
       {cleaning && (
         <DutyCard
           title="Найближче прибирання"

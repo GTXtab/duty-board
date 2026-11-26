@@ -14,6 +14,7 @@ import { useGoogleAuth } from './google/useGoogleAuth';
 import { todayIso } from './schedule/date';
 import { distribute } from './schedule/distribute';
 import { buildSample } from './schedule/sample';
+import type { IsoDate } from './schedule/types';
 import { parseSheetLink } from './source/sheetLink';
 import { useSchedule } from './useSchedule';
 
@@ -26,8 +27,10 @@ export const App = ({ googleClientId }: { readonly googleClientId: string | null
   const google = useGoogleActions(auth.forget);
   const today = todayIso();
   const source = loaded?.source;
-  const daily = loaded && distribute(loaded.schedule.daily, today);
   const cleaning = loaded?.schedule.cleaning && distribute(loaded.schedule.cleaning, today);
+  // The general cleaning replaces the daily duty on its days.
+  const cleaningDays: ReadonlySet<IsoDate> = new Set(cleaning?.rows.map((row) => row.date));
+  const daily = loaded && distribute(loaded.schedule.daily, today, cleaningDays);
   const link = source?.kind === 'link' ? source.link : null;
   const sheet = link === null ? null : parseSheetLink(link);
   const { token } = auth;
@@ -110,7 +113,12 @@ export const App = ({ googleClientId }: { readonly googleClientId: string | null
             />
           )}
           <div className={cleaning ? 'boards split' : 'boards'}>
-            <MonthCalendar roster={daily} today={today} marking={markingFor('daily')} />
+            <MonthCalendar
+              roster={daily}
+              today={today}
+              cleaningDays={cleaningDays}
+              marking={markingFor('daily')}
+            />
             {cleaning && (
               <CleaningList roster={cleaning} today={today} marking={markingFor('cleaning')} />
             )}

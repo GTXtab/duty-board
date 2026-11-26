@@ -10,10 +10,16 @@ const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
 interface MonthCalendarProps {
   readonly roster: Roster;
   readonly today: IsoDate;
+  readonly cleaningDays: ReadonlySet<IsoDate>;
   readonly marking: Marking | null;
 }
 
-export const MonthCalendar = ({ roster, today, marking }: MonthCalendarProps) => {
+export const MonthCalendar = ({
+  roster,
+  today,
+  cleaningDays,
+  marking,
+}: MonthCalendarProps) => {
   const months = [...new Set(roster.rows.map((row) => monthKey(row.date)))];
   const [position, setPosition] = useState(() => Math.max(months.indexOf(monthKey(today)), 0));
   const [showPast, setShowPast] = useState(false);
@@ -62,6 +68,8 @@ export const MonthCalendar = ({ roster, today, marking }: MonthCalendarProps) =>
           const duty = membersWith(roster, row, 'assigned', 'done', 'suggested');
           const away = membersWith(roster, row, 'away');
           const weekday = weekdayIndex(row.date);
+          // A mark typed into the sheet by hand still wins over the cleaning day.
+          const isCleaningOnly = cleaningDays.has(row.date) && duty.length === 0;
           const classes = [
             'day',
             weekday > 4 && 'weekend',
@@ -85,9 +93,10 @@ export const MonthCalendar = ({ roster, today, marking }: MonthCalendarProps) =>
                 {duty.map(({ name, index }) => (
                   <PersonChip key={name} name={name} index={index} mark={row.marks[index]} />
                 ))}
+                {isCleaningOnly && <span className="hint">Прибирання</span>}
               </div>
-              {marking && <MarkList roster={roster} row={row} today={today} {...marking} />}
-              {away.length > 0 && (
+              {marking && !isCleaningOnly && <MarkList roster={roster} row={row} today={today} {...marking} />}
+              {away.length > 0 && !isCleaningOnly && (
                 <details className="away">
                   <summary>Немає: {away.length}</summary>
                   {away.map(({ name }) => name).join(', ')}

@@ -4,8 +4,13 @@ import type { IsoDate, Roster } from './types';
  * Fills every free date from today on with the available member who has the fewest duties,
  * then the one who has rested longest. The result depends only on the sheet and the date,
  * so everyone reading the same sheet sees the same plan.
+ * Dates in `covered` need nobody, because another roster already takes care of them.
  */
-export const distribute = (roster: Roster, today: IsoDate): Roster => {
+export const distribute = (
+  roster: Roster,
+  today: IsoDate,
+  covered: ReadonlySet<IsoDate> = new Set(),
+): Roster => {
   const stats = roster.members.map((_, index) => {
     const doneDates = roster.rows
       .filter((row) => row.marks[index] === 'done')
@@ -34,7 +39,7 @@ export const distribute = (roster: Roster, today: IsoDate): Roster => {
     }
 
     let { marks } = row;
-    if (onDuty.length === 0) {
+    if (onDuty.length === 0 && !covered.has(row.date)) {
       const available = stats.filter(({ index }) => row.marks[index] === null);
       // Two turns in a row are allowed only when nobody else is around.
       const rested = available.filter(({ index }) => !previous.has(index));
