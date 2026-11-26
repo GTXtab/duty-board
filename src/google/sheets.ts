@@ -5,11 +5,13 @@ import { googleRequest, isRecord } from './api';
 
 const API = 'https://sheets.googleapis.com/v4/spreadsheets';
 
+export type MarkAction = 'done' | 'undone' | 'away' | 'back';
+
 export interface DutyMark {
   readonly roster: 'daily' | 'cleaning';
   readonly date: IsoDate;
   readonly member: string;
-  readonly done: boolean;
+  readonly action: MarkAction;
 }
 
 /** A message that is safe and useful to show to the person. */
@@ -52,18 +54,37 @@ export const writeDutyMark = async (token: string, ref: SheetRef, mark: DutyMark
   if (!roster || !row || index === -1) {
     throw new SheetWriteError('Таблиця змінилася: онови сторінку й спробуй ще раз.');
   }
-  if (row.marks[index] === 'away') {
-    throw new SheetWriteError('У клітинці стоїть Х. Спершу прибери його в таблиці.');
+  const current = row.marks[index];
+  const isAttendance = mark.action === 'away' || mark.action === 'back';
+  if (!isAttendance && current === 'away') {
+    throw new SheetWriteError('Цю людину позначено відсутньою. Спершу натисни «Повернути».');
   }
+  if (mark.action === 'away' && current === 'done') {
+    throw new SheetWriteError('Чергування вже відмічене виконаним. Спершу зніми галочку.');
+  }
+  // Someone else may have changed the cell already; there is nothing left to undo then.
+  if (mark.action === 'back' && current !== 'away') return;
 
   const column = roster.dateColumn + 1 + index;
-  const current = values[row.line]?.[column]?.toLowerCase();
-  const isCheckbox = current === 'true' || current === 'false';
-  const value = isCheckbox ? mark.done : mark.done ? '✓' : '';
+  const isCheckbox = (text: string | undefined): boolean => /^(true|false)$/i.test(text ?? '');
+  // An away mark replaces the checkbox value, so the rest of the table tells what to restore.
+  const usesCheckboxes =
+    mark.action === 'back'
+      ? roster.rows.some(({ line }) =>
+          roster.members.some((_, i) => isCheckbox(values[line]?.[roster.dateColumn + 1 + i])),
+        )
+      : isCheckbox(values[row.line]?.[column]);
+  const cleared = usesCheckboxes ? false : '';
+  const written: Record<MarkAction, string | boolean> = {
+    done: usesCheckboxes ? true : '✓',
+    undone: cleared,
+    away: 'Х',
+    back: cleared,
+  };
   const range = encodeURIComponent(`${sheet}!${columnName(column)}${row.line + 1}`);
 
   await googleRequest(token, `${base}/values/${range}?valueInputOption=RAW`, {
     method: 'PUT',
-    body: { values: [[value]] },
+    body: { values: [[written[mark.action]]] },
   });
 };

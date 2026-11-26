@@ -86,10 +86,10 @@ export const MonthCalendar = ({ roster, today, marking }: MonthCalendarProps) =>
                   <PersonChip key={name} name={name} index={index} mark={row.marks[index]} />
                 ))}
               </div>
-              {marking && row.date <= today && <MarkList roster={roster} row={row} {...marking} />}
+              {marking && <MarkList roster={roster} row={row} today={today} {...marking} />}
               {away.length > 0 && (
                 <details className="away">
-                  <summary>Поїхали: {away.length}</summary>
+                  <summary>Немає: {away.length}</summary>
                   {away.map(({ name }) => name).join(', ')}
                 </details>
               )}

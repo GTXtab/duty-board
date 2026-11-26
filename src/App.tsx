@@ -36,9 +36,9 @@ export const App = ({ googleClientId }: { readonly googleClientId: string | null
     token && sheet && link !== null
       ? {
           isBusy: google.isBusy || isLoading,
-          onToggle: (row, member, done) =>
+          onMark: (row, member, action) =>
             void google.run(async () => {
-              await writeDutyMark(token, sheet, { roster, date: row.date, member, done });
+              await writeDutyMark(token, sheet, { roster, date: row.date, member, action });
               await loadLink(link);
             }, 'Таблицю оновлено.'),
         }
@@ -90,7 +90,12 @@ export const App = ({ googleClientId }: { readonly googleClientId: string | null
               Ця таблиця не збережена й зникне після перезавантаження сторінки.
             </p>
           )}
-          <TodaySummary daily={daily} cleaning={cleaning ?? null} today={today} />
+          <TodaySummary
+            daily={daily}
+            cleaning={cleaning ?? null}
+            today={today}
+            marking={markingFor('daily')}
+          />
           {auth.isEnabled && (
             <GooglePanel
               members={daily.members}

@@ -33,7 +33,7 @@ export const CleaningList = ({ roster, today, marking }: CleaningListProps) => {
               ))}
               {groups.length === 0 && <span className="hint">Не призначено</span>}
             </div>
-            {marking && row.date <= today && <MarkList roster={roster} row={row} {...marking} />}
+            {marking && <MarkList roster={roster} row={row} today={today} {...marking} />}
           </li>
         );
       })}

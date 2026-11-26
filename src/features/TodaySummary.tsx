@@ -1,6 +1,7 @@
 import { addDays, formatDay } from '../schedule/date';
 import { membersWith } from '../schedule/selectors';
 import type { IsoDate, Roster, RosterRow } from '../schedule/types';
+import type { Marking } from './MarkList';
 import { personStyle } from './personStyle';
 
 interface DutyCardProps {
@@ -9,11 +10,20 @@ interface DutyCardProps {
   readonly row: RosterRow | undefined;
   readonly emptyText: string;
   readonly isHero?: boolean;
+  readonly marking?: Marking | null;
 }
 
-const DutyCard = ({ title, roster, row, emptyText, isHero = false }: DutyCardProps) => {
+const DutyCard = ({
+  title,
+  roster,
+  row,
+  emptyText,
+  isHero = false,
+  marking = null,
+}: DutyCardProps) => {
   const people = row ? membersWith(roster, row, 'assigned', 'done', 'suggested') : [];
   const [lead] = people;
+  const away = row && isHero ? membersWith(roster, row, 'away') : [];
   const isDone = people.length > 0 && people.every(({ index }) => row?.marks[index] === 'done');
   return (
     <article
@@ -30,6 +40,43 @@ const DutyCard = ({ title, roster, row, emptyText, isHero = false }: DutyCardPro
       {isHero && people.length > 0 && (
         <p className={isDone ? 'state done' : 'state'}>{isDone ? '✓ Виконано' : 'Ще не відмічено'}</p>
       )}
+      {marking && row && (
+        <div className="leave">
+          {people
+            .filter(({ index }) => row.marks[index] !== 'done')
+            .map(({ name }) => (
+              <button
+                key={name}
+                type="button"
+                className="secondary"
+                disabled={marking.isBusy}
+                onClick={() => marking.onMark(row, name, 'away')}
+              >
+                {people.length > 1 ? `${name}: немає в гуртожитку` : 'Немає в гуртожитку'}
+              </button>
+            ))}
+        </div>
+      )}
+      {away.length > 0 && row && (
+        <ul className="absent">
+          {away.map(({ name }) => (
+            <li key={name}>
+              Сьогодні немає: {name}
+              {marking && (
+                <button
+                  type="button"
+                  className="secondary"
+                  aria-label={`Повернути: ${name}`}
+                  disabled={marking.isBusy}
+                  onClick={() => marking.onMark(row, name, 'back')}
+                >
+                  Повернути
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </article>
   );
 };
@@ -38,9 +85,10 @@ interface TodaySummaryProps {
   readonly daily: Roster;
   readonly cleaning: Roster | null;
   readonly today: IsoDate;
+  readonly marking: Marking | null;
 }
 
-export const TodaySummary = ({ daily, cleaning, today }: TodaySummaryProps) => {
+export const TodaySummary = ({ daily, cleaning, today, marking }: TodaySummaryProps) => {
   const rowOn = (date: IsoDate) => daily.rows.find((row) => row.date === date);
   const todayRow = rowOn(today);
   const tomorrowRow = rowOn(addDays(today, 1));
@@ -51,6 +99,7 @@ export const TodaySummary = ({ daily, cleaning, today }: TodaySummaryProps) => {
     <section className="summary">
       <DutyCard
         isHero
+        marking={marking}
         title="Сьогодні чергує"
         roster={daily}
         row={todayRow}

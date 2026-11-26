@@ -36,21 +36,39 @@ afterEach(() => vi.unstubAllGlobals());
 describe('writeDutyMark', () => {
   it('writes a boolean into a checkbox cell', async () => {
     const mock = stubSheets();
-    await writeDutyMark('t', REF, { roster: 'daily', date: '2026-11-26', member: 'Оля', done: true });
+    await writeDutyMark('t', REF, { roster: 'daily', date: '2026-11-26', member: 'Оля', action: 'done' });
     expect(writes(mock)).toEqual([["'Блок ''4'''!B3?valueInputOption=RAW", '{"values":[[true]]}']]);
   });
 
   it('writes a check mark into a plain cell of the cleaning table', async () => {
     const mock = stubSheets();
-    await writeDutyMark('t', REF, { roster: 'cleaning', date: '2026-12-02', member: 'Оля Макс', done: true });
+    await writeDutyMark('t', REF, { roster: 'cleaning', date: '2026-12-02', member: 'Оля Макс', action: 'done' });
     expect(writes(mock)).toEqual([["'Блок ''4'''!F4?valueInputOption=RAW", '{"values":[["✓"]]}']]);
   });
 
   it('never overwrites an away mark', async () => {
     const mock = stubSheets();
     await expect(
-      writeDutyMark('t', REF, { roster: 'daily', date: '2026-11-26', member: 'Макс', done: true }),
-    ).rejects.toThrow('Х');
+      writeDutyMark('t', REF, { roster: 'daily', date: '2026-11-26', member: 'Макс', action: 'done' }),
+    ).rejects.toThrow('відсутньою');
+    expect(writes(mock)).toEqual([]);
+  });
+
+  it('marks a person absent for one day', async () => {
+    const mock = stubSheets();
+    await writeDutyMark('t', REF, { roster: 'daily', date: '2026-11-27', member: 'Макс', action: 'away' });
+    expect(writes(mock)).toEqual([["'Блок ''4'''!C4?valueInputOption=RAW", '{"values":[["Х"]]}']]);
+  });
+
+  it('restores an empty checkbox when the person is back', async () => {
+    const mock = stubSheets();
+    await writeDutyMark('t', REF, { roster: 'daily', date: '2026-11-26', member: 'Макс', action: 'back' });
+    expect(writes(mock)).toEqual([["'Блок ''4'''!C3?valueInputOption=RAW", '{"values":[[false]]}']]);
+  });
+
+  it('leaves other marks alone on return', async () => {
+    const mock = stubSheets();
+    await writeDutyMark('t', REF, { roster: 'daily', date: '2026-11-27', member: 'Оля', action: 'back' });
     expect(writes(mock)).toEqual([]);
   });
 });
