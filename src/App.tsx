@@ -56,8 +56,10 @@ export const App = () => {
             </div>
           )}
           <TodaySummary daily={daily} cleaning={cleaning ?? null} today={today} />
-          <MonthCalendar roster={daily} today={today} />
-          {cleaning && <CleaningList roster={cleaning} today={today} />}
+          <div className={cleaning ? 'boards split' : 'boards'}>
+            <MonthCalendar roster={daily} today={today} />
+            {cleaning && <CleaningList roster={cleaning} today={today} />}
+          </div>
           <BalanceChart roster={daily} />
         </>
       ) : (
